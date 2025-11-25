@@ -1,0 +1,35 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+// database/migrations/2024_01_01_000010_create_sales_transactions_table.php
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('sales_transactions', function (Blueprint $table) {
+            $table->unsignedBigInteger('transaction_id')->primary();
+            $table->unsignedBigInteger('order_id');
+            $table->decimal('amount', 10, 2);
+            $table->timestamps();
+
+            $table->foreign('transaction_id')
+                  ->references('transaction_id')
+                  ->on('transactions')
+                  ->cascadeOnDelete();
+
+            $table->foreign('order_id')
+                  ->references('order_id')
+                  ->on('sales_orders')
+                  ->cascadeOnDelete();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('sales_transactions');
+    }
+};
