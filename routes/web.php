@@ -12,9 +12,9 @@ use App\Http\Controllers\PurchaseOrderController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-// ========== ROOT / WELCOME PAGE (CUSTOMER FACING) ==========
+// ========== ROOT / WELCOME PAGE (REDIRECT TO PRODUCTS) ==========
 Route::get('/', function () {
-    return Inertia::render('Welcome');
+    return redirect()->route('products.index');
 })->name('welcome');
 
 // ========== STAFF ROUTES (Access via /staff) ==========
@@ -51,11 +51,11 @@ Route::get('/customer/dashboard', [CustomerAuthController::class, 'dashboard'])
     ->middleware('auth:customer')
     ->name('customer.dashboard');
 
-// ========== CUSTOMER PRODUCT BROWSING & CART ==========
+// ========== PRODUCT BROWSING (PUBLIC - No Login Required) ==========
+Route::get('/products', [ProductCustomerController::class, 'index'])->name('products.index');
+
+// ========== CUSTOMER PRODUCT ACTIONS (Login Required) ==========
 Route::middleware('auth:customer')->group(function () {
-    // Products browsing for customers
-    Route::get('/products', [ProductCustomerController::class, 'index'])->name('products.index');
-    
     // Cart routes
     Route::prefix('cart')->name('cart.')->group(function () {
         Route::get('/', [CartController::class, 'index'])->name('index');

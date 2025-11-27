@@ -7,7 +7,12 @@ import {
     FunnelIcon,
     MagnifyingGlassIcon,
     CheckCircleIcon,
-    XCircleIcon
+    XCircleIcon,
+    PhoneIcon,
+    EnvelopeIcon,
+    MapPinIcon,
+    ClockIcon,
+    UserIcon
 } from '@heroicons/react/24/outline';
 
 export default function ProductsIndex({ products, auth, cartCount, flash }) {
@@ -36,15 +41,21 @@ export default function ProductsIndex({ products, auth, cartCount, flash }) {
     });
 
     const addToCart = (productId) => {
-        router.post('/cart/add', 
-            { product_id: productId, quantity: 1 },
-            {
-                preserveScroll: true,
+        if (!auth?.user) {
+            // Redirect to login if not authenticated
+            router.visit('/customer/login', {
+                data: { redirect: '/products' },
                 onSuccess: () => {
-                    // Success message will be in flash
+                    // After login, add to cart
+                    router.post('/cart/add', { product_id: productId, quantity: 1 });
                 }
-            }
-        );
+            });
+        } else {
+            router.post('/cart/add', 
+                { product_id: productId, quantity: 1 },
+                { preserveScroll: true }
+            );
+        }
     };
 
     const getCategoryGradient = (category) => {
@@ -75,7 +86,7 @@ export default function ProductsIndex({ products, auth, cartCount, flash }) {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
                         <div className="flex items-center space-x-4">
-                            <Link href="/customer/dashboard" className="flex items-center space-x-3">
+                            <Link href="/" className="flex items-center space-x-3">
                                 <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
                                     <span className="text-white font-bold text-xl">T&T</span>
                                 </div>
@@ -85,26 +96,53 @@ export default function ProductsIndex({ products, auth, cartCount, flash }) {
                             </Link>
                         </div>
                         <div className="flex items-center space-x-4">
-                            <Link 
-                                href="/customer/dashboard"
-                                className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors"
-                            >
-                                Dashboard
-                            </Link>
-                            <Link 
-                                href="/cart" 
-                                className="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors"
-                            >
-                                <ShoppingCartIcon className="w-6 h-6" />
-                                {cartCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                                        {cartCount}
-                                    </span>
-                                )}
-                            </Link>
-                            <div className="px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
-                                <span className="text-sm font-semibold text-gray-900">{auth?.user?.name || 'Guest'}</span>
-                            </div>
+                            {auth?.user ? (
+                                <>
+                                    <Link 
+                                        href="/customer/dashboard"
+                                        className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors"
+                                    >
+                                        Dashboard
+                                    </Link>
+                                    <Link 
+                                        href="/cart" 
+                                        className="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors"
+                                    >
+                                        <ShoppingCartIcon className="w-6 h-6" />
+                                        {cartCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                                {cartCount}
+                                            </span>
+                                        )}
+                                    </Link>
+                                    <div className="px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
+                                        <span className="text-sm font-semibold text-gray-900">{auth.user.name}</span>
+                                    </div>
+                                    <Link 
+                                        href="/customer/logout" 
+                                        method="post" 
+                                        as="button"
+                                        className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        Logout
+                                    </Link>
+                                </>
+                            ) : (
+                                <>
+                                    <Link
+                                        href="/customer/login"
+                                        className="px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                    >
+                                        Login
+                                    </Link>
+                                    <Link
+                                        href="/customer/register"
+                                        className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:shadow-lg transition-all"
+                                    >
+                                        Sign Up
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -129,14 +167,14 @@ export default function ProductsIndex({ products, auth, cartCount, flash }) {
 
             <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">PC Components Store</h1>
-                    <p className="text-gray-600">Build your dream setup with premium components</p>
+                <div className="mb-8 text-center">
+                    <h1 className="text-5xl font-bold text-gray-900 mb-4">PC Components Store</h1>
+                    <p className="text-xl text-gray-600">Build your dream setup with premium components</p>
                 </div>
 
                 {/* Search Bar */}
                 <div className="mb-6">
-                    <div className="relative">
+                    <div className="relative max-w-2xl mx-auto">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                         </div>
@@ -249,6 +287,86 @@ export default function ProductsIndex({ products, auth, cartCount, flash }) {
                     </div>
                 </div>
             </main>
+
+            {/* Footer - Customer Care Section */}
+            <footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-white mt-16">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Contact Info */}
+                        <div>
+                            <h3 className="text-2xl font-bold mb-4 flex items-center">
+                                <PhoneIcon className="w-6 h-6 mr-2" />
+                                Customer Care
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="flex items-start">
+                                    <PhoneIcon className="w-5 h-5 mr-3 mt-1 text-indigo-400" />
+                                    <div>
+                                        <p className="font-semibold">Phone</p>
+                                        <p className="text-gray-300">+8801767595560 </p>
+                                        <p className="text-gray-300">+8801968595759 </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start">
+                                    <EnvelopeIcon className="w-5 h-5 mr-3 mt-1 text-indigo-400" />
+                                    <div>
+                                        <p className="font-semibold">Email</p>
+                                        <p className="text-gray-300">support@trackandtrade.com</p>
+                                        <p className="text-gray-300">sales@trackandtrade.com</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Location */}
+                        <div>
+                            <h3 className="text-2xl font-bold mb-4 flex items-center">
+                                <MapPinIcon className="w-6 h-6 mr-2" />
+                                Visit Our Store
+                            </h3>
+                            <div className="flex items-start">
+                                <MapPinIcon className="w-5 h-5 mr-3 mt-1 text-indigo-400" />
+                                <div>
+                                    <p className="text-gray-300 leading-relaxed">
+                                        123 Tech Plaza, Level 5<br />
+                                        Banani, Dhaka 1213<br />
+                                        Bangladesh
+                                    </p>
+                                    <a 
+                                        href="https://maps.google.com" 
+                                        target="_blank"
+                                        className="inline-block mt-2 text-indigo-400 hover:text-indigo-300 font-semibold"
+                                    >
+                                        Get Directions →
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Business Hours */}
+                        <div>
+                            <h3 className="text-2xl font-bold mb-4 flex items-center">
+                                <ClockIcon className="w-6 h-6 mr-2" />
+                                Business Hours
+                            </h3>
+                            <div className="space-y-2 text-gray-300">
+                                <div className="flex justify-between">
+                                    <span>Saturday - Thursday:</span>
+                                    <span className="font-semibold">10:00 AM - 8:00 PM</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Friday:</span>
+                                    <span className="font-semibold">2:00 PM - 8:00 PM</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                        <p>© 2024 Track & Trade. All rights reserved.</p>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 }

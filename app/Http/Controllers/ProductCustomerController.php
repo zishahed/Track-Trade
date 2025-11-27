@@ -10,12 +10,12 @@ use Inertia\Inertia;
 class ProductCustomerController extends Controller
 {
     /**
-     * Display product listing for customers
+     * Display product listing for everyone (guests and customers)
      */
     public function index(Request $request)
     {
-        $products = Product::where('quantity', '>', 0)
-            ->orderBy('category')
+        // Get all products, including out of stock
+        $products = Product::orderBy('category')
             ->orderBy('name')
             ->get();
 
