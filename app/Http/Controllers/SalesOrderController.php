@@ -16,14 +16,9 @@ class SalesOrderController extends Controller
 {
     public function index()
     {
-        $orders = SalesOrder::with(['customer'])
+        $orders = SalesOrder::with(['customer', 'items.product', 'salesTransaction.transaction.staff'])
             ->latest('order_date')
             ->paginate(20);
-
-        // Calculate total amount for each order
-        foreach ($orders as $order) {
-            $order->total_amount = $order->incomes()->sum(DB::raw('quantity * price'));
-        }
 
         return Inertia::render('SalesOrders/Index', [
             'orders' => $orders
@@ -49,6 +44,7 @@ class SalesOrderController extends Controller
             'customer_id' => 'required|exists:customers,customer_id',
             'payment_method' => 'required|string|in:cash,card,bank_transfer',
             'is_staff_purchase' => 'boolean',
+            'shipping_address' => 'nullable|string|max:500',
         ]);
 
         // Get cart from session
@@ -61,18 +57,12 @@ class SalesOrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Create sales order
-            $order = SalesOrder::create([
-                'customer_id' => $validated['customer_id'],
-                'order_date' => now(),
-                'status' => 'completed'
-            ]);
+            $subtotal = 0;
+            $orderItems = [];
 
-            $totalAmount = 0;
-
-            // Process each cart item
+            // Process each cart item and calculate totals
             foreach ($cart as $productId => $cartItem) {
-                $product = Product::findOrFail($productId);
+                $product = Product::lockForUpdate()->findOrFail($productId);
 
                 // Check stock
                 if ($product->quantity < $cartItem['quantity']) {
@@ -85,32 +75,68 @@ class SalesOrderController extends Controller
                     $price *= 0.90; // 10% discount
                 }
 
-                // Create income record
+                $itemSubtotal = $price * $cartItem['quantity'];
+                $subtotal += $itemSubtotal;
+
+                $orderItems[] = [
+                    'product' => $product,
+                    'quantity' => $cartItem['quantity'],
+                    'price' => $price,
+                    'subtotal' => $itemSubtotal
+                ];
+            }
+
+            // Calculate tax and shipping
+            $tax = $subtotal * 0.10;
+            $shipping = $subtotal >= 100 ? 0 : 10;
+            $total = $subtotal + $tax + $shipping;
+
+            // Create sales order
+            $order = SalesOrder::create([
+                'customer_id' => $validated['customer_id'],
+                'order_date' => now(),
+                'status' => 'completed',
+                'shipping_address' => $validated['shipping_address'] ?? null,
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'shipping' => $shipping,
+                'total' => $total
+            ]);
+
+            // Create order items and update inventory
+            foreach ($orderItems as $item) {
+                // Create order item
+                $order->items()->create([
+                    'product_id' => $item['product']->product_id,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                    'subtotal' => $item['subtotal']
+                ]);
+
+                // Also create income record for backwards compatibility
                 Income::create([
                     'order_id' => $order->order_id,
-                    'product_id' => $product->product_id,
-                    'quantity' => $cartItem['quantity'],
-                    'price' => $price
+                    'product_id' => $item['product']->product_id,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price']
                 ]);
 
                 // Update product quantity
-                $product->decrement('quantity', $cartItem['quantity']);
+                $item['product']->decrement('quantity', $item['quantity']);
 
                 // Check if product is now low on stock
-                if ($product->quantity < 10 && !$product->low_stock_alert_created_at) {
-                    $product->update([
+                if ($item['product']->quantity < 10 && !$item['product']->low_stock_alert_created_at) {
+                    $item['product']->update([
                         'low_stock_alert_created_at' => now()
                     ]);
                 }
-
-                $totalAmount += $price * $cartItem['quantity'];
             }
 
-            // Create transaction
+            // Create transaction (staff-created order)
             $transaction = Transaction::create([
                 'transaction_date' => now(),
                 'payment_method' => $validated['payment_method'],
-                'created_by' => auth()->guard('staff')->id(),
+                'created_by' => auth()->guard('staff')->id(), // Staff ID
                 'type' => 'sales'
             ]);
 
@@ -118,7 +144,7 @@ class SalesOrderController extends Controller
             SalesTransaction::create([
                 'transaction_id' => $transaction->transaction_id,
                 'order_id' => $order->order_id,
-                'amount' => $totalAmount
+                'amount' => $total
             ]);
 
             DB::commit();
@@ -139,11 +165,9 @@ class SalesOrderController extends Controller
     {
         $order = SalesOrder::with([
             'customer',
-            'incomes.product',
+            'items.product',
             'salesTransaction.transaction.staff'
         ])->findOrFail($orderId);
-
-        $order->total_amount = $order->incomes()->sum(DB::raw('quantity * price'));
 
         return Inertia::render('SalesOrders/Show', [
             'order' => $order
@@ -159,7 +183,15 @@ class SalesOrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Return products to inventory
+            // Return products to inventory using items relationship
+            foreach ($salesOrder->items as $item) {
+                $product = Product::find($item->product_id);
+                if ($product) {
+                    $product->increment('quantity', $item->quantity);
+                }
+            }
+
+            // Also check incomes for backwards compatibility
             foreach ($salesOrder->incomes as $income) {
                 $product = Product::find($income->product_id);
                 if ($product) {

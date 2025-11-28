@@ -1,5 +1,3 @@
-// resources/js/Pages/SalesOrders/Index.jsx
-
 import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
 import { 
@@ -9,18 +7,29 @@ import {
     ClockIcon,
     XCircleIcon,
     EyeIcon,
-    CurrencyDollarIcon
+    UserIcon,
+    ComputerDesktopIcon
 } from '@heroicons/react/24/outline';
 
 export default function SalesOrdersIndex({ orders, auth }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [sourceFilter, setSourceFilter] = useState('all'); // all, online, staff
 
     const filteredOrders = orders.data.filter(order => {
         const matchesSearch = order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             order.order_id.toString().includes(searchTerm);
         const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-        return matchesSearch && matchesStatus;
+        
+        // Filter by source (online vs staff)
+        let matchesSource = true;
+        if (sourceFilter === 'online') {
+            matchesSource = !order.sales_transaction?.transaction?.created_by;
+        } else if (sourceFilter === 'staff') {
+            matchesSource = !!order.sales_transaction?.transaction?.created_by;
+        }
+        
+        return matchesSearch && matchesStatus && matchesSource;
     });
 
     const getStatusBadge = (status) => {
@@ -37,6 +46,8 @@ export default function SalesOrdersIndex({ orders, auth }) {
         completed: orders.data.filter(o => o.status === 'completed').length,
         pending: orders.data.filter(o => o.status === 'pending').length,
         cancelled: orders.data.filter(o => o.status === 'cancelled').length,
+        online: orders.data.filter(o => !o.sales_transaction?.transaction?.created_by).length,
+        staff: orders.data.filter(o => !!o.sales_transaction?.transaction?.created_by).length,
     };
 
     return (
@@ -86,15 +97,15 @@ export default function SalesOrdersIndex({ orders, auth }) {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
                     <div className="bg-white rounded-2xl shadow-lg p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Total Orders</p>
-                                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+                                <p className="text-xs font-medium text-gray-600 mb-1">Total Orders</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
                             </div>
-                            <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl">
-                                <ShoppingCartIcon className="w-6 h-6 text-white" />
+                            <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl">
+                                <ShoppingCartIcon className="w-5 h-5 text-white" />
                             </div>
                         </div>
                     </div>
@@ -102,23 +113,11 @@ export default function SalesOrdersIndex({ orders, auth }) {
                     <div className="bg-white rounded-2xl shadow-lg p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Completed</p>
-                                <p className="text-3xl font-bold text-green-600">{stats.completed}</p>
+                                <p className="text-xs font-medium text-gray-600 mb-1">Completed</p>
+                                <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
                             </div>
-                            <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
-                                <CheckCircleIcon className="w-6 h-6 text-white" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl shadow-lg p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Pending</p>
-                                <p className="text-3xl font-bold text-yellow-600">{stats.pending}</p>
-                            </div>
-                            <div className="p-3 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl">
-                                <ClockIcon className="w-6 h-6 text-white" />
+                            <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
+                                <CheckCircleIcon className="w-5 h-5 text-white" />
                             </div>
                         </div>
                     </div>
@@ -126,19 +125,56 @@ export default function SalesOrdersIndex({ orders, auth }) {
                     <div className="bg-white rounded-2xl shadow-lg p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Cancelled</p>
-                                <p className="text-3xl font-bold text-red-600">{stats.cancelled}</p>
+                                <p className="text-xs font-medium text-gray-600 mb-1">Pending</p>
+                                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
                             </div>
-                            <div className="p-3 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl">
-                                <XCircleIcon className="w-6 h-6 text-white" />
+                            <div className="p-2 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl">
+                                <ClockIcon className="w-5 h-5 text-white" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-lg p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-medium text-gray-600 mb-1">Cancelled</p>
+                                <p className="text-2xl font-bold text-red-600">{stats.cancelled}</p>
+                            </div>
+                            <div className="p-2 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl">
+                                <XCircleIcon className="w-5 h-5 text-white" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-lg p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-medium text-gray-600 mb-1">Online</p>
+                                <p className="text-2xl font-bold text-blue-600">{stats.online}</p>
+                            </div>
+                            <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl">
+                                <ComputerDesktopIcon className="w-5 h-5 text-white" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-lg p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-medium text-gray-600 mb-1">Staff</p>
+                                <p className="text-2xl font-bold text-purple-600">{stats.staff}</p>
+                            </div>
+                            <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl">
+                                <UserIcon className="w-5 h-5 text-white" />
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Search and Filters */}
-                <div className="mb-6 flex flex-col sm:flex-row gap-4">
-                    <div className="relative flex-1">
+                <div className="mb-6 space-y-4">
+                    {/* Search Bar */}
+                    <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                         </div>
@@ -150,37 +186,78 @@ export default function SalesOrdersIndex({ orders, auth }) {
                             className="pl-12 w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
                     </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setStatusFilter('all')}
-                            className={`px-6 py-3 rounded-xl font-medium transition-all ${
-                                statusFilter === 'all'
-                                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
-                                    : 'bg-white text-gray-700 border-2 border-gray-200'
-                            }`}
-                        >
-                            All
-                        </button>
-                        <button
-                            onClick={() => setStatusFilter('completed')}
-                            className={`px-6 py-3 rounded-xl font-medium transition-all ${
-                                statusFilter === 'completed'
-                                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg'
-                                    : 'bg-white text-gray-700 border-2 border-gray-200'
-                            }`}
-                        >
-                            Completed
-                        </button>
-                        <button
-                            onClick={() => setStatusFilter('pending')}
-                            className={`px-6 py-3 rounded-xl font-medium transition-all ${
-                                statusFilter === 'pending'
-                                    ? 'bg-gradient-to-r from-yellow-600 to-orange-600 text-white shadow-lg'
-                                    : 'bg-white text-gray-700 border-2 border-gray-200'
-                            }`}
-                        >
-                            Pending
-                        </button>
+
+                    {/* Filters */}
+                    <div className="flex flex-wrap gap-2">
+                        {/* Status Filters */}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setStatusFilter('all')}
+                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                                    statusFilter === 'all'
+                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+                                        : 'bg-white text-gray-700 border-2 border-gray-200'
+                                }`}
+                            >
+                                All Status
+                            </button>
+                            <button
+                                onClick={() => setStatusFilter('completed')}
+                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                                    statusFilter === 'completed'
+                                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg'
+                                        : 'bg-white text-gray-700 border-2 border-gray-200'
+                                }`}
+                            >
+                                Completed
+                            </button>
+                            <button
+                                onClick={() => setStatusFilter('pending')}
+                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                                    statusFilter === 'pending'
+                                        ? 'bg-gradient-to-r from-yellow-600 to-orange-600 text-white shadow-lg'
+                                        : 'bg-white text-gray-700 border-2 border-gray-200'
+                                }`}
+                            >
+                                Pending
+                            </button>
+                        </div>
+
+                        <div className="w-px h-10 bg-gray-300"></div>
+
+                        {/* Source Filters */}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setSourceFilter('all')}
+                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                                    sourceFilter === 'all'
+                                        ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white shadow-lg'
+                                        : 'bg-white text-gray-700 border-2 border-gray-200'
+                                }`}
+                            >
+                                All Orders
+                            </button>
+                            <button
+                                onClick={() => setSourceFilter('online')}
+                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                                    sourceFilter === 'online'
+                                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
+                                        : 'bg-white text-gray-700 border-2 border-gray-200'
+                                }`}
+                            >
+                                🌐 Online
+                            </button>
+                            <button
+                                onClick={() => setSourceFilter('staff')}
+                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                                    sourceFilter === 'staff'
+                                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                                        : 'bg-white text-gray-700 border-2 border-gray-200'
+                                }`}
+                            >
+                                👤 Staff
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -203,6 +280,9 @@ export default function SalesOrdersIndex({ orders, auth }) {
                                         Status
                                     </th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                        Source
+                                    </th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                         Total
                                     </th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -213,6 +293,9 @@ export default function SalesOrdersIndex({ orders, auth }) {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredOrders.map((order) => {
                                     const badge = getStatusBadge(order.status);
+                                    const createdByStaff = order.sales_transaction?.transaction?.staff;
+                                    const isOnlineOrder = !order.sales_transaction?.transaction?.created_by;
+                                    
                                     return (
                                         <tr key={order.order_id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -234,8 +317,23 @@ export default function SalesOrdersIndex({ orders, auth }) {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
+                                                {isOnlineOrder ? (
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                                        <ComputerDesktopIcon className="w-3 h-3 mr-1" />
+                                                        Online
+                                                    </span>
+                                                ) : (
+                                                    <div className="flex items-center">
+                                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                                                            <UserIcon className="w-3 h-3 mr-1" />
+                                                            {createdByStaff?.name || 'Staff'}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="text-sm font-bold text-gray-900">
-                                                    ${order.total_amount ? parseFloat(order.total_amount).toFixed(2) : '0.00'}
+                                                    ${order.total ? parseFloat(order.total).toFixed(2) : '0.00'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -244,7 +342,7 @@ export default function SalesOrdersIndex({ orders, auth }) {
                                                     className="inline-flex items-center px-4 py-2 bg-indigo-100 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-200 transition-colors"
                                                 >
                                                     <EyeIcon className="w-4 h-4 mr-2" />
-                                                    View Details
+                                                    View
                                                 </Link>
                                             </td>
                                         </tr>
@@ -261,6 +359,29 @@ export default function SalesOrdersIndex({ orders, auth }) {
                         </div>
                     )}
                 </div>
+
+                {/* Pagination */}
+                {orders.links && orders.links.length > 3 && (
+                    <div className="mt-6 flex justify-center">
+                        <nav className="flex items-center space-x-2">
+                            {orders.links.map((link, index) => (
+                                <Link
+                                    key={index}
+                                    href={link.url || '#'}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        link.active
+                                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
+                                            : link.url
+                                            ? 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    }`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                    preserveScroll
+                                />
+                            ))}
+                        </nav>
+                    </div>
+                )}
             </main>
         </div>
     );

@@ -7,6 +7,7 @@ use App\Http\Controllers\StaffManagementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCustomerController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\PurchaseOrderController;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +65,11 @@ Route::middleware('auth:customer')->group(function () {
         Route::delete('/{productId}', [CartController::class, 'remove'])->name('remove');
         Route::delete('/', [CartController::class, 'clear'])->name('clear');
     });
+
+    // Checkout routes
+    Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.show');
+    Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
+    Route::get('/checkout/success/{orderId}', [CheckoutController::class, 'success'])->name('checkout.success');
 });
 
 // ========== STAFF MANAGEMENT (Manager Only) ==========

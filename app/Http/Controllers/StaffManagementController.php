@@ -65,7 +65,7 @@ class StaffManagementController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return redirect()->route('staff.index')
+        return redirect()->route('staff-management.index')
             ->with('success', 'Staff member added successfully.');
     }
 
@@ -107,7 +107,7 @@ class StaffManagementController extends Controller
             ]);
         }
 
-        return redirect()->route('staff.index')
+        return redirect()->route('staff-management.index')
             ->with('success', 'Staff member updated successfully.');
     }
 
@@ -125,7 +125,7 @@ class StaffManagementController extends Controller
 
         $staff->delete();
 
-        return redirect()->route('staff.index')
+        return redirect()->route('staff-management.index')
             ->with('success', 'Staff member deleted successfully.');
     }
 }

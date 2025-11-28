@@ -58,12 +58,7 @@ export default function CustomerDashboard({ customer, auth }) {
                             </Link>
                         </div>
                         <div className="flex items-center space-x-4">
-                            <Link 
-                                href="/products" 
-                                className="px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                            >
-                                Browse Products
-                            </Link>
+                            
                             <div className="flex items-center space-x-3 px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
                                 <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center">
                                     <span className="text-white text-sm font-semibold">

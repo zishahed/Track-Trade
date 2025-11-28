@@ -167,37 +167,49 @@ export default function Dashboard({ auth }) {
                     <div className="mb-8">
                         <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <Link
-                                href="/admin/products"
-                                className="bg-gradient-to-br from-blue-500 to-indigo-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
-                            >
-                                <CubeIcon className="h-8 w-8 text-white mb-3 group-hover:scale-110 transition-transform" />
-                                <h4 className="text-lg font-semibold text-white">Manage Products</h4>
-                            </Link>
+                            {/* Manager & Inventory can manage products */}
+                            {(auth.user?.role === 'manager' || auth.user?.role === 'inventory') && (
+                                <Link
+                                    href="/admin/products"
+                                    className="bg-gradient-to-br from-blue-500 to-indigo-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
+                                >
+                                    <CubeIcon className="h-8 w-8 text-white mb-3 group-hover:scale-110 transition-transform" />
+                                    <h4 className="text-lg font-semibold text-white">Manage Products</h4>
+                                </Link>
+                            )}
                             
-                            <Link
-                                href="/sales-orders"
-                                className="bg-gradient-to-br from-purple-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
-                            >
-                                <ShoppingCartIcon className="h-8 w-8 text-white mb-3 group-hover:scale-110 transition-transform" />
-                                <h4 className="text-lg font-semibold text-white">Sales Orders</h4>
-                            </Link>
+                            {/* Sales & Manager can see sales orders */}
+                            {(auth.user?.role === 'manager' || auth.user?.role === 'sales') && (
+                                <Link
+                                    href="/sales-orders"
+                                    className="bg-gradient-to-br from-purple-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
+                                >
+                                    <ShoppingCartIcon className="h-8 w-8 text-white mb-3 group-hover:scale-110 transition-transform" />
+                                    <h4 className="text-lg font-semibold text-white">Sales Orders</h4>
+                                </Link>
+                            )}
                             
-                            <Link
-                                href="/purchase-orders"
-                                className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
-                            >
-                                <TruckIcon className="h-8 w-8 text-white mb-3 group-hover:scale-110 transition-transform" />
-                                <h4 className="text-lg font-semibold text-white">Purchase Orders</h4>
-                            </Link>
+                            {/* Inventory & Manager can see purchase orders */}
+                            {(auth.user?.role === 'manager' || auth.user?.role === 'inventory') && (
+                                <Link
+                                    href="/purchase-orders"
+                                    className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
+                                >
+                                    <TruckIcon className="h-8 w-8 text-white mb-3 group-hover:scale-110 transition-transform" />
+                                    <h4 className="text-lg font-semibold text-white">Purchase Orders</h4>
+                                </Link>
+                            )}
                             
-                            <Link
-                                href="/products/low-stock"
-                                className="bg-gradient-to-br from-orange-500 to-red-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
-                            >
-                                <ExclamationTriangleIcon className="h-8 w-8 text-white mb-3 group-hover:scale-110 transition-transform" />
-                                <h4 className="text-lg font-semibold text-white">Low Stock Alerts</h4>
-                            </Link>
+                            {/* Inventory & Manager can see low stock alerts */}
+                            {(auth.user?.role === 'manager' || auth.user?.role === 'inventory') && (
+                                <Link
+                                    href="/products/low-stock"
+                                    className="bg-gradient-to-br from-orange-500 to-red-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
+                                >
+                                    <ExclamationTriangleIcon className="h-8 w-8 text-white mb-3 group-hover:scale-110 transition-transform" />
+                                    <h4 className="text-lg font-semibold text-white">Low Stock Alerts</h4>
+                                </Link>
+                            )}
                         </div>
                     </div>
 

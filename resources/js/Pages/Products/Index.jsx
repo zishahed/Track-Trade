@@ -98,26 +98,31 @@ export default function ProductsIndex({ products, auth, cartCount, flash }) {
                         <div className="flex items-center space-x-4">
                             {auth?.user ? (
                                 <>
+                                    {/* Clickable Customer Name with Icon - Goes to Dashboard */}
                                     <Link 
                                         href="/customer/dashboard"
-                                        className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors"
+                                        className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg hover:from-indigo-100 hover:to-purple-100 transition-all group"
                                     >
-                                        Dashboard
+                                        <UserIcon className="w-5 h-5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                                        <span className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                                            {auth.user.name}
+                                        </span>
                                     </Link>
+
+                                    {/* Cart Icon */}
                                     <Link 
                                         href="/cart" 
                                         className="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors"
                                     >
-                                        <ShoppingCartIcon className="w-6 h-6" />
+                                    <ShoppingCartIcon className="w-6 h-6" />
                                         {cartCount > 0 && (
-                                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                                                {cartCount}
-                                            </span>
-                                        )}
+                                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                            {cartCount}
+                                        </span>
+                                    )}
                                     </Link>
-                                    <div className="px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
-                                        <span className="text-sm font-semibold text-gray-900">{auth.user.name}</span>
-                                    </div>
+
+                                    {/* Logout Button */}
                                     <Link 
                                         href="/customer/logout" 
                                         method="post" 
@@ -128,7 +133,7 @@ export default function ProductsIndex({ products, auth, cartCount, flash }) {
                                     </Link>
                                 </>
                             ) : (
-                                <>
+                                <>  
                                     <Link
                                         href="/customer/login"
                                         className="px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -142,7 +147,7 @@ export default function ProductsIndex({ products, auth, cartCount, flash }) {
                                         Sign Up
                                     </Link>
                                 </>
-                            )}
+                                )}
                         </div>
                     </div>
                 </div>

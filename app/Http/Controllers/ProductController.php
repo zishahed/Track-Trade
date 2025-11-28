@@ -113,6 +113,9 @@ class ProductController extends Controller
             ->with('success', 'Product deleted successfully.');
     }
 
+    /**
+     * Display low stock products
+     */
     public function lowStock()
     {
         $products = Product::where('quantity', '<', 10)
