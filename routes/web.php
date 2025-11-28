@@ -10,6 +10,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -25,9 +26,10 @@ Route::post('/staff/logout', [StaffController::class, 'logout'])
     ->middleware('auth:staff')
     ->name('staff.logout');
 
-Route::get('/staff/dashboard', function () {
-    return Inertia::render('Dashboard/Index');
-})->middleware('auth:staff')->name('staff.dashboard');
+// Updated Dashboard Route - Now uses DashboardController
+Route::get('/staff/dashboard', [DashboardController::class, 'index'])
+    ->middleware('auth:staff')
+    ->name('staff.dashboard');
 
 // ========== CUSTOMER AUTHENTICATION ==========
 Route::get('/customer/register', [CustomerAuthController::class, 'showRegister'])
@@ -111,6 +113,8 @@ Route::middleware('auth:staff')->group(function () {
         ->name('sales-orders.index');
     Route::get('/sales-orders/{salesOrder}', [SalesOrderController::class, 'show'])
         ->name('sales-orders.show');
+    Route::post('/sales-orders/{salesOrder}/complete', [SalesOrderController::class, 'complete'])
+        ->name('sales-orders.complete');
     Route::post('/sales-orders/{salesOrder}/cancel', [SalesOrderController::class, 'cancel'])
         ->name('sales-orders.cancel');
 });

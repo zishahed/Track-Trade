@@ -14,21 +14,20 @@ import {
 export default function SalesOrdersIndex({ orders, auth }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [sourceFilter, setSourceFilter] = useState('all'); // all, online, staff
+    const [sourceFilter, setSourceFilter] = useState('all');
 
     const filteredOrders = orders.data.filter(order => {
         const matchesSearch = order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            order.order_id.toString().includes(searchTerm);
+                              order.order_id.toString().includes(searchTerm);
         const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-        
-        // Filter by source (online vs staff)
+
         let matchesSource = true;
         if (sourceFilter === 'online') {
             matchesSource = !order.sales_transaction?.transaction?.created_by;
         } else if (sourceFilter === 'staff') {
             matchesSource = !!order.sales_transaction?.transaction?.created_by;
         }
-        
+
         return matchesSearch && matchesStatus && matchesSource;
     });
 
@@ -52,6 +51,7 @@ export default function SalesOrdersIndex({ orders, auth }) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            
             {/* Navigation */}
             <nav className="bg-white shadow-sm border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -87,6 +87,7 @@ export default function SalesOrdersIndex({ orders, auth }) {
             </nav>
 
             <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center">
@@ -98,166 +99,87 @@ export default function SalesOrdersIndex({ orders, auth }) {
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                    <div className="bg-white rounded-2xl shadow-lg p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-gray-600 mb-1">Total Orders</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                            </div>
-                            <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl">
-                                <ShoppingCartIcon className="w-5 h-5 text-white" />
-                            </div>
-                        </div>
+                    <div className="bg-white rounded-xl shadow p-4">
+                        <div className="text-gray-500 text-sm">Total Orders</div>
+                        <div className="text-2xl font-bold">{stats.total}</div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-lg p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-gray-600 mb-1">Completed</p>
-                                <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-                            </div>
-                            <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
-                                <CheckCircleIcon className="w-5 h-5 text-white" />
-                            </div>
-                        </div>
+                    <div className="bg-white rounded-xl shadow p-4">
+                        <div className="text-gray-500 text-sm">Completed</div>
+                        <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-lg p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-gray-600 mb-1">Pending</p>
-                                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-                            </div>
-                            <div className="p-2 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl">
-                                <ClockIcon className="w-5 h-5 text-white" />
-                            </div>
-                        </div>
+                    <div className="bg-white rounded-xl shadow p-4">
+                        <div className="text-gray-500 text-sm">Pending</div>
+                        <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-lg p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-gray-600 mb-1">Cancelled</p>
-                                <p className="text-2xl font-bold text-red-600">{stats.cancelled}</p>
-                            </div>
-                            <div className="p-2 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl">
-                                <XCircleIcon className="w-5 h-5 text-white" />
-                            </div>
-                        </div>
+                    <div className="bg-white rounded-xl shadow p-4">
+                        <div className="text-gray-500 text-sm">Cancelled</div>
+                        <div className="text-2xl font-bold text-red-600">{stats.cancelled}</div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-lg p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-gray-600 mb-1">Online</p>
-                                <p className="text-2xl font-bold text-blue-600">{stats.online}</p>
-                            </div>
-                            <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl">
-                                <ComputerDesktopIcon className="w-5 h-5 text-white" />
-                            </div>
-                        </div>
+                    <div className="bg-white rounded-xl shadow p-4">
+                        <div className="text-gray-500 text-sm">Online</div>
+                        <div className="text-2xl font-bold text-blue-600">{stats.online}</div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-lg p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-gray-600 mb-1">Staff</p>
-                                <p className="text-2xl font-bold text-purple-600">{stats.staff}</p>
-                            </div>
-                            <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl">
-                                <UserIcon className="w-5 h-5 text-white" />
-                            </div>
-                        </div>
+                    <div className="bg-white rounded-xl shadow p-4">
+                        <div className="text-gray-500 text-sm">Staff</div>
+                        <div className="text-2xl font-bold text-purple-600">{stats.staff}</div>
                     </div>
                 </div>
 
-                {/* Search and Filters */}
+                {/* Search + Filters */}
                 <div className="mb-6 space-y-4">
-                    {/* Search Bar */}
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                        </div>
+                        <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-3 text-gray-400"/>
                         <input
                             type="text"
+                            placeholder="Search by customer name or order ID..."
+                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-400"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            placeholder="Search by customer name or order ID..."
-                            className="pl-12 w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
                     </div>
 
                     {/* Filters */}
                     <div className="flex flex-wrap gap-2">
-                        {/* Status Filters */}
-                        <div className="flex gap-2">
+                        {['all','completed','pending','cancelled'].map(s => (
                             <button
-                                onClick={() => setStatusFilter('all')}
-                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
-                                    statusFilter === 'all'
-                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
-                                        : 'bg-white text-gray-700 border-2 border-gray-200'
+                                key={s}
+                                className={`px-4 py-2 rounded-lg border text-sm font-medium ${
+                                    statusFilter === s 
+                                        ? 'bg-indigo-600 text-white' 
+                                        : 'bg-white text-gray-700 border-gray-300'
                                 }`}
+                                onClick={() => setStatusFilter(s)}
                             >
-                                All Status
+                                {s === 'all' ? 'All Status' : s.charAt(0).toUpperCase() + s.slice(1)}
                             </button>
-                            <button
-                                onClick={() => setStatusFilter('completed')}
-                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
-                                    statusFilter === 'completed'
-                                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg'
-                                        : 'bg-white text-gray-700 border-2 border-gray-200'
-                                }`}
-                            >
-                                Completed
-                            </button>
-                            <button
-                                onClick={() => setStatusFilter('pending')}
-                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
-                                    statusFilter === 'pending'
-                                        ? 'bg-gradient-to-r from-yellow-600 to-orange-600 text-white shadow-lg'
-                                        : 'bg-white text-gray-700 border-2 border-gray-200'
-                                }`}
-                            >
-                                Pending
-                            </button>
-                        </div>
+                        ))}
 
-                        <div className="w-px h-10 bg-gray-300"></div>
+                        <button
+                            className={`px-4 py-2 rounded-lg border text-sm font-medium ${
+                                sourceFilter === 'online' 
+                                    ? 'bg-blue-600 text-white' 
+                                    : 'bg-white text-gray-700 border-gray-300'
+                            }`}
+                            onClick={() => setSourceFilter(sourceFilter === 'online' ? 'all' : 'online')}
+                        >
+                            Online
+                        </button>
 
-                        {/* Source Filters */}
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setSourceFilter('all')}
-                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
-                                    sourceFilter === 'all'
-                                        ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white shadow-lg'
-                                        : 'bg-white text-gray-700 border-2 border-gray-200'
-                                }`}
-                            >
-                                All Orders
-                            </button>
-                            <button
-                                onClick={() => setSourceFilter('online')}
-                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
-                                    sourceFilter === 'online'
-                                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
-                                        : 'bg-white text-gray-700 border-2 border-gray-200'
-                                }`}
-                            >
-                                🌐 Online
-                            </button>
-                            <button
-                                onClick={() => setSourceFilter('staff')}
-                                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
-                                    sourceFilter === 'staff'
-                                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                                        : 'bg-white text-gray-700 border-2 border-gray-200'
-                                }`}
-                            >
-                                👤 Staff
-                            </button>
-                        </div>
+                        <button
+                            className={`px-4 py-2 rounded-lg border text-sm font-medium ${
+                                sourceFilter === 'staff' 
+                                    ? 'bg-purple-600 text-white' 
+                                    : 'bg-white text-gray-700 border-gray-300'
+                            }`}
+                            onClick={() => setSourceFilter(sourceFilter === 'staff' ? 'all' : 'staff')}
+                        >
+                            Staff
+                        </button>
                     </div>
                 </div>
 
@@ -267,79 +189,69 @@ export default function SalesOrdersIndex({ orders, auth }) {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gradient-to-r from-indigo-50 to-purple-50">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Order ID
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Customer
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Date
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Source
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Total
-                                    </th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Actions
-                                    </th>
+                                    <th className="px-6 py-4">Order ID</th>
+                                    <th className="px-6 py-4">Customer</th>
+                                    <th className="px-6 py-4">Date</th>
+                                    <th className="px-6 py-4">Status</th>
+                                    <th className="px-6 py-4">Source</th>
+                                    <th className="px-6 py-4">Total</th>
+                                    <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
+
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredOrders.map((order) => {
+                                {filteredOrders.map(order => {
                                     const badge = getStatusBadge(order.status);
                                     const createdByStaff = order.sales_transaction?.transaction?.staff;
                                     const isOnlineOrder = !order.sales_transaction?.transaction?.created_by;
-                                    
+
                                     return (
-                                        <tr key={order.order_id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                        <tr key={order.order_id} className="hover:bg-gray-50">
+                                            
+                                            <td className="px-6 py-4">
                                                 <span className="text-sm font-bold text-indigo-600">#{order.order_id}</span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div>
-                                                    <div className="text-sm font-medium text-gray-900">{order.customer.name}</div>
-                                                    <div className="text-sm text-gray-500">{order.customer.email}</div>
-                                                </div>
+
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm font-medium">{order.customer.name}</div>
+                                                <div className="text-sm text-gray-500">{order.customer.email}</div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+
+                                            <td className="px-6 py-4 text-sm text-gray-500">
                                                 {new Date(order.order_date).toLocaleDateString()}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+
+                                            <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${badge.bg} ${badge.text}`}>
                                                     <badge.icon className="w-3 h-3 mr-1" />
                                                     {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+
+                                            <td className="px-6 py-4">
                                                 {isOnlineOrder ? (
                                                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
                                                         <ComputerDesktopIcon className="w-3 h-3 mr-1" />
                                                         Online
                                                     </span>
                                                 ) : (
-                                                    <div className="flex items-center">
-                                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
-                                                            <UserIcon className="w-3 h-3 mr-1" />
-                                                            {createdByStaff?.name || 'Staff'}
-                                                        </span>
-                                                    </div>
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                                                        <UserIcon className="w-3 h-3 mr-1" />
+                                                        {createdByStaff?.name || 'Staff'}
+                                                    </span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="text-sm font-bold text-gray-900">
+
+                                            <td className="px-6 py-4">
+                                                <span className="text-sm font-bold">
                                                     ${order.total ? parseFloat(order.total).toFixed(2) : '0.00'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+
+                                            <td className="px-6 py-4 text-right">
                                                 <Link
                                                     href={`/sales-orders/${order.order_id}`}
-                                                    className="inline-flex items-center px-4 py-2 bg-indigo-100 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-200 transition-colors"
+                                                    className="inline-flex items-center px-4 py-2 bg-indigo-100 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-200"
                                                 >
                                                     <EyeIcon className="w-4 h-4 mr-2" />
                                                     View
@@ -368,11 +280,11 @@ export default function SalesOrdersIndex({ orders, auth }) {
                                 <Link
                                     key={index}
                                     href={link.url || '#'}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
                                         link.active
                                             ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
                                             : link.url
-                                            ? 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                                            ? 'bg-white text-gray-700 border-2 hover:bg-gray-50'
                                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     }`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
@@ -382,6 +294,7 @@ export default function SalesOrdersIndex({ orders, auth }) {
                         </nav>
                     </div>
                 )}
+
             </main>
         </div>
     );

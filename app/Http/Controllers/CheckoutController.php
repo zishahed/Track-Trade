@@ -6,6 +6,7 @@ use App\Models\SalesOrder;
 use App\Models\SalesTransaction;
 use App\Models\Transaction;
 use App\Models\Product;
+use App\Models\Income;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -104,11 +105,11 @@ class CheckoutController extends Controller
             $shipping = $subtotal >= 100 ? 0 : 10;
             $total = $subtotal + $tax + $shipping;
 
-            // Create Sales Order
+            // Create Sales Order with PENDING status
             $salesOrder = SalesOrder::create([
                 'customer_id' => $customer->customer_id,
                 'order_date' => now(),
-                'status' => 'completed',
+                'status' => 'pending', // ✅ PENDING for customer orders
                 'shipping_address' => $request->shipping_address,
                 'subtotal' => $subtotal,
                 'tax' => $tax,
@@ -116,18 +117,25 @@ class CheckoutController extends Controller
                 'total' => $total
             ]);
 
-            // Create order items and update product quantities
+            // Create income records and update product quantities
             foreach ($orderItems as $item) {
-                // Create order item
-                $salesOrder->items()->create([
+                // Create income record
+                Income::create([
+                    'order_id' => $salesOrder->order_id,
                     'product_id' => $item['product']->product_id,
                     'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                    'subtotal' => $item['subtotal']
+                    'price' => $item['price']
                 ]);
 
                 // Reduce product quantity
                 $item['product']->decrement('quantity', $item['quantity']);
+
+                // Check if product is now low on stock
+                if ($item['product']->quantity < 10 && !$item['product']->low_stock_alert_created_at) {
+                    $item['product']->update([
+                        'low_stock_alert_created_at' => now()
+                    ]);
+                }
             }
 
             // Create Transaction with created_by as NULL (customer order)
@@ -162,7 +170,7 @@ class CheckoutController extends Controller
     public function success($orderId)
     {
         $customer = Auth::guard('customer')->user();
-        $order = SalesOrder::with('items.product')
+        $order = SalesOrder::with('incomes.product')
             ->where('order_id', $orderId)
             ->where('customer_id', $customer->customer_id)
             ->firstOrFail();

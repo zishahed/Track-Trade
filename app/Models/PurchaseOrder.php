@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseOrder extends Model
 {
@@ -40,6 +41,6 @@ class PurchaseOrder extends Model
 
     public function getTotalAmount()
     {
-        return $this->expenses()->sum(\DB::raw('quantity * price'));
+        return $this->expenses()->sum(DB::raw('quantity * price'));
     }
 }

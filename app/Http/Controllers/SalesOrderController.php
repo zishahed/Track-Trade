@@ -95,7 +95,7 @@ class SalesOrderController extends Controller
             $order = SalesOrder::create([
                 'customer_id' => $validated['customer_id'],
                 'order_date' => now(),
-                'status' => 'completed',
+                'status' => 'completed', // Staff orders are immediately completed
                 'shipping_address' => $validated['shipping_address'] ?? null,
                 'subtotal' => $subtotal,
                 'tax' => $tax,
@@ -105,15 +105,7 @@ class SalesOrderController extends Controller
 
             // Create order items and update inventory
             foreach ($orderItems as $item) {
-                // Create order item
-                $order->items()->create([
-                    'product_id' => $item['product']->product_id,
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                    'subtotal' => $item['subtotal']
-                ]);
-
-                // Also create income record for backwards compatibility
+                // Create income record
                 Income::create([
                     'order_id' => $order->order_id,
                     'product_id' => $item['product']->product_id,
@@ -165,7 +157,7 @@ class SalesOrderController extends Controller
     {
         $order = SalesOrder::with([
             'customer',
-            'items.product',
+            'incomes.product',
             'salesTransaction.transaction.staff'
         ])->findOrFail($orderId);
 
@@ -174,24 +166,35 @@ class SalesOrderController extends Controller
         ]);
     }
 
+    public function complete(SalesOrder $salesOrder)
+    {
+        if ($salesOrder->status === 'completed') {
+            return back()->with('error', 'Order is already completed.');
+        }
+
+        if ($salesOrder->status === 'cancelled') {
+            return back()->with('error', 'Cannot complete a cancelled order.');
+        }
+
+        $salesOrder->update(['status' => 'completed']);
+
+        return back()->with('success', 'Order marked as completed successfully.');
+    }
+
     public function cancel(SalesOrder $salesOrder)
     {
         if ($salesOrder->status === 'cancelled') {
             return back()->with('error', 'Order is already cancelled.');
         }
 
+        if ($salesOrder->status === 'completed') {
+            return back()->with('error', 'Cannot cancel a completed order.');
+        }
+
         try {
             DB::beginTransaction();
 
-            // Return products to inventory using items relationship
-            foreach ($salesOrder->items as $item) {
-                $product = Product::find($item->product_id);
-                if ($product) {
-                    $product->increment('quantity', $item->quantity);
-                }
-            }
-
-            // Also check incomes for backwards compatibility
+            // Return products to inventory
             foreach ($salesOrder->incomes as $income) {
                 $product = Product::find($income->product_id);
                 if ($product) {

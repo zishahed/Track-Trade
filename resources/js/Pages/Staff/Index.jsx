@@ -8,7 +8,6 @@ import {
     PencilIcon, 
     TrashIcon,
     MagnifyingGlassIcon,
-    UserIcon,
     EnvelopeIcon,
     ShieldCheckIcon,
     CalendarIcon

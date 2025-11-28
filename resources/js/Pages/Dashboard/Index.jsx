@@ -16,63 +16,75 @@ import {
     CheckCircleIcon
 } from '@heroicons/react/24/outline';
 
-export default function Dashboard({ auth }) {
-    const stats = [
-        { 
-            name: 'Total Revenue', 
-            value: '$45,231', 
-            change: '+12.5%',
-            trending: 'up',
-            icon: CurrencyDollarIcon, 
+export default function Dashboard({ auth, stats, recentActivities }) {
+    // Map stats from backend to display format
+    const statsDisplay = [];
+    
+    // Define icon and color mappings
+    const statConfig = {
+        totalRevenue: {
+            icon: CurrencyDollarIcon,
             color: 'from-green-400 to-emerald-600',
             bgColor: 'bg-green-50',
-            textColor: 'text-green-600'
+            textColor: 'text-green-600',
+            description: 'Total sales revenue this quarter'
         },
-        { 
-            name: 'Total Products', 
-            value: '2,458', 
-            change: '+5.2%',
-            trending: 'up',
-            icon: CubeIcon, 
+        totalProducts: {
+            icon: CubeIcon,
             color: 'from-blue-400 to-indigo-600',
             bgColor: 'bg-blue-50',
-            textColor: 'text-blue-600'
+            textColor: 'text-blue-600',
+            description: 'Total items in inventory'
         },
-        { 
-            name: 'Sales Today', 
-            value: '145', 
-            change: '+8.1%',
-            trending: 'up',
-            icon: ShoppingCartIcon, 
+        salesToday: {
+            icon: ShoppingCartIcon,
             color: 'from-purple-400 to-pink-600',
             bgColor: 'bg-purple-50',
-            textColor: 'text-purple-600'
+            textColor: 'text-purple-600',
+            description: 'Completed orders today'
         },
-        { 
-            name: 'Low Stock Items', 
-            value: '12', 
-            change: '-3 from yesterday',
-            trending: 'down',
-            icon: ExclamationTriangleIcon, 
+        totalExpense: {
+            icon: TruckIcon,
+            color: 'from-amber-400 to-orange-600',
+            bgColor: 'bg-amber-50',
+            textColor: 'text-amber-600',
+            description: 'Total purchase costs this quarter'
+        },
+        lowStock: {
+            icon: ExclamationTriangleIcon,
             color: 'from-orange-400 to-red-600',
             bgColor: 'bg-red-50',
-            textColor: 'text-red-600'
-        },
-    ];
+            textColor: 'text-red-600',
+            description: 'Products requiring restock'
+        }
+    };
 
-    const recentActivities = [
-        { id: 1, type: 'sale', message: 'New order #1234 completed', time: '2 minutes ago', icon: CheckCircleIcon, color: 'text-green-600' },
-        { id: 2, type: 'stock', message: 'Low stock alert for Laptop Dell', time: '15 minutes ago', icon: ExclamationTriangleIcon, color: 'text-orange-600' },
-        { id: 3, type: 'purchase', message: 'Purchase order #5678 received', time: '1 hour ago', icon: TruckIcon, color: 'text-blue-600' },
-        { id: 4, type: 'sale', message: 'New order #1233 completed', time: '2 hours ago', icon: CheckCircleIcon, color: 'text-green-600' },
-    ];
+    // Build stats array from backend data
+    if (stats) {
+        Object.keys(stats).forEach(key => {
+            const stat = stats[key];
+            const config = statConfig[key];
+            
+            if (config) {
+                statsDisplay.push({
+                    ...stat,
+                    icon: config.icon,
+                    color: config.color,
+                    bgColor: config.bgColor,
+                    textColor: config.textColor,
+                    description: config.description
+                });
+            }
+        });
+    }
 
-    const quickActions = [
-        { name: 'Manage Products', href: '/products', icon: CubeIcon, color: 'bg-gradient-to-br from-blue-500 to-indigo-600' },
-        { name: 'Sales Orders', href: '/sales-orders', icon: ShoppingCartIcon, color: 'bg-gradient-to-br from-purple-500 to-pink-600' },
-        { name: 'Purchase Orders', href: '/purchase-orders', icon: TruckIcon, color: 'bg-gradient-to-br from-green-500 to-emerald-600' },
-        { name: 'Low Stock Alerts', href: '/products/low-stock', icon: ExclamationTriangleIcon, color: 'bg-gradient-to-br from-orange-500 to-red-600' },
-    ];
+    // Icon component mapping for recent activities
+    const iconComponents = {
+        CheckCircleIcon,
+        ExclamationTriangleIcon,
+        TruckIcon,
+        ShoppingCartIcon
+    };
 
     const isManager = auth.user?.role === 'manager';
 
@@ -138,25 +150,26 @@ export default function Dashboard({ auth }) {
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                        {stats.map((stat) => (
+                        {statsDisplay.map((stat) => (
                             <div key={stat.name} className="bg-white overflow-hidden shadow-lg rounded-2xl hover:shadow-xl transition-shadow">
                                 <div className="p-6">
-                                    <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600 mb-1">{stat.name}</p>
+                                            <p className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</p>
+                                            <p className="text-xs text-gray-500">{stat.description}</p>
+                                        </div>
                                         <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.color}`}>
                                             <stat.icon className="h-6 w-6 text-white" />
                                         </div>
-                                        <div className={`flex items-center space-x-1 text-sm font-semibold ${stat.trending === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                                            {stat.trending === 'up' ? (
-                                                <ArrowTrendingUpIcon className="w-4 h-4" />
-                                            ) : (
-                                                <ArrowTrendingDownIcon className="w-4 h-4" />
-                                            )}
-                                            <span>{stat.change}</span>
-                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-600 mb-1">{stat.name}</p>
-                                        <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                                    <div className={`flex items-center space-x-1 text-sm font-semibold ${stat.trending === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                                        {stat.trending === 'up' ? (
+                                            <ArrowTrendingUpIcon className="w-4 h-4" />
+                                        ) : (
+                                            <ArrowTrendingDownIcon className="w-4 h-4" />
+                                        )}
+                                        <span>{stat.change}</span>
                                     </div>
                                 </div>
                             </div>
@@ -170,11 +183,11 @@ export default function Dashboard({ auth }) {
                             {/* Manager & Inventory can manage products */}
                             {(auth.user?.role === 'manager' || auth.user?.role === 'inventory') && (
                                 <Link
-                                    href="/admin/products"
+                                    href="/products"
                                     className="bg-gradient-to-br from-blue-500 to-indigo-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
                                 >
                                     <CubeIcon className="h-8 w-8 text-white mb-3 group-hover:scale-110 transition-transform" />
-                                    <h4 className="text-lg font-semibold text-white">Manage Products</h4>
+                                    <h4 className="text-lg font-semibold text-white">Products</h4>
                                 </Link>
                             )}
                             
@@ -222,17 +235,26 @@ export default function Dashboard({ auth }) {
                                 <ClockIcon className="w-5 h-5 text-gray-400" />
                             </div>
                             <div className="space-y-4">
-                                {recentActivities.map((activity) => (
-                                    <div key={activity.id} className="flex items-start space-x-4 p-4 rounded-xl hover:bg-gray-50 transition-colors">
-                                        <div className={`p-2 rounded-lg bg-gray-100`}>
-                                            <activity.icon className={`w-5 h-5 ${activity.color}`} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900">{activity.message}</p>
-                                            <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
-                                        </div>
+                                {recentActivities && recentActivities.length > 0 ? (
+                                    recentActivities.map((activity) => {
+                                        const IconComponent = iconComponents[activity.icon] || CheckCircleIcon;
+                                        return (
+                                            <div key={activity.id} className="flex items-start space-x-4 p-4 rounded-xl hover:bg-gray-50 transition-colors">
+                                                <div className={`p-2 rounded-lg bg-gray-100`}>
+                                                    <IconComponent className={`w-5 h-5 ${activity.color}`} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-gray-900">{activity.message}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <p>No recent activities to display</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
 
