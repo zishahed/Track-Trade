@@ -1,5 +1,3 @@
-// resources/js/Pages/PurchaseOrders/Index.jsx
-
 import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
 import { 
@@ -9,7 +7,8 @@ import {
     ClockIcon,
     XCircleIcon,
     EyeIcon,
-    PlusIcon
+    PlusIcon,
+    UserIcon
 } from '@heroicons/react/24/outline';
 
 export default function PurchaseOrdersIndex({ orders, auth }) {
@@ -18,7 +17,7 @@ export default function PurchaseOrdersIndex({ orders, auth }) {
 
     const filteredOrders = orders.data.filter(order => {
         const matchesSearch = order.supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            order.purchase_id.toString().includes(searchTerm);
+                            order.order_id.toString().includes(searchTerm); // Changed from purchase_id
         const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
@@ -212,6 +211,9 @@ export default function PurchaseOrdersIndex({ orders, auth }) {
                                         Status
                                     </th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                        Created By
+                                    </th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                         Total
                                     </th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -223,9 +225,10 @@ export default function PurchaseOrdersIndex({ orders, auth }) {
                                 {filteredOrders.map((order) => {
                                     const badge = getStatusBadge(order.status);
                                     return (
-                                        <tr key={order.purchase_id} className="hover:bg-gray-50 transition-colors">
+                                        <tr key={order.order_id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="text-sm font-bold text-green-600">#PO-{order.purchase_id}</span>
+
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div>
@@ -243,6 +246,12 @@ export default function PurchaseOrdersIndex({ orders, auth }) {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                                                    <UserIcon className="w-3 h-3 mr-1" />
+                                                    {order.purchase_transaction?.transaction?.staff?.name || 'N/A'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="text-sm font-bold text-gray-900">
                                                     ${order.total_amount ? parseFloat(order.total_amount).toFixed(2) : '0.00'}
                                                 </span>
@@ -253,7 +262,7 @@ export default function PurchaseOrdersIndex({ orders, auth }) {
                                                     className="inline-flex items-center px-4 py-2 bg-green-100 text-green-700 font-semibold rounded-lg hover:bg-green-200 transition-colors"
                                                 >
                                                     <EyeIcon className="w-4 h-4 mr-2" />
-                                                    View Details
+                                                        View Details
                                                 </Link>
                                             </td>
                                         </tr>

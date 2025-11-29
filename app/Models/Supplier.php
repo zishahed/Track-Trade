@@ -3,21 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Supplier extends Model
 {
     protected $primaryKey = 'supplier_id';
-
+    
     protected $fillable = [
         'name',
         'email',
         'phone',
         'contact_person',
-        'address',
+        'address'
     ];
 
-    public function purchaseOrders(): HasMany
+    public function purchaseOrders()
     {
         return $this->hasMany(PurchaseOrder::class, 'supplier_id', 'supplier_id');
     }

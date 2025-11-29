@@ -1,11 +1,8 @@
 <?php
 
-// app/Models/PurchaseTransaction.php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PurchaseTransaction extends Model
 {
@@ -15,19 +12,19 @@ class PurchaseTransaction extends Model
     protected $fillable = [
         'transaction_id',
         'purchase_id',
-        'amount',
+        'amount'
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
+        'amount' => 'decimal:2'
     ];
 
-    public function transaction(): BelongsTo
+    public function transaction()
     {
         return $this->belongsTo(Transaction::class, 'transaction_id', 'transaction_id');
     }
 
-    public function purchaseOrder(): BelongsTo
+    public function purchaseOrder()
     {
         return $this->belongsTo(PurchaseOrder::class, 'purchase_id', 'purchase_id');
     }

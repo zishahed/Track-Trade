@@ -16,32 +16,12 @@ class PurchaseOrderController extends Controller
 {
     public function index()
     {
-        $orders = PurchaseOrder::with(['supplier'])
+        $orders = PurchaseOrder::with(['supplier', 'purchaseTransaction.transaction.staff'])
             ->latest('purchase_date')
             ->paginate(20);
 
-        // Calculate total amount for each order
-        foreach ($orders as $order) {
-            $order->total_amount = $order->expenses()->sum(DB::raw('quantity * price'));
-        }
-
         return Inertia::render('PurchaseOrders/Index', [
             'orders' => $orders
-        ]);
-    }
-
-    public function show($purchaseId)
-    {
-        $order = PurchaseOrder::with([
-            'supplier',
-            'expenses.product',
-            'purchaseTransaction.transaction.staff'
-        ])->findOrFail($purchaseId);
-
-        $order->total_amount = $order->expenses()->sum(DB::raw('quantity * price'));
-
-        return Inertia::render('PurchaseOrders/Show', [
-            'order' => $order
         ]);
     }
 
@@ -64,43 +44,50 @@ class PurchaseOrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,product_id',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.price' => 'required|numeric|min:0'
+            'items.*.price' => 'required|numeric|min:0',
         ]);
 
         try {
             DB::beginTransaction();
 
-            $order = PurchaseOrder::create([
-                'supplier_id' => $validated['supplier_id'],
-                'purchase_date' => now(),
-                'status' => 'completed'
-            ]);
-
             $totalAmount = 0;
 
+            // Calculate total
             foreach ($validated['items'] as $item) {
+                $totalAmount += $item['quantity'] * $item['price'];
+            }
+
+            // Create Purchase Order
+            $purchaseOrder = PurchaseOrder::create([
+                'supplier_id' => $validated['supplier_id'],
+                'purchase_date' => now(),
+                'status' => 'completed',
+                'total_amount' => $totalAmount
+            ]);
+
+            // Create expenses and update product quantities
+            foreach ($validated['items'] as $item) {
+                // Create expense record
                 Expense::create([
-                    'purchase_id' => $order->purchase_id,
+                    'purchase_id' => $purchaseOrder->purchase_id,  // ✅ Must be purchase_id
                     'product_id' => $item['product_id'],
                     'quantity' => $item['quantity'],
                     'price' => $item['price']
                 ]);
 
-                // Update product quantity
+                // Increase product quantity
                 $product = Product::find($item['product_id']);
                 $product->increment('quantity', $item['quantity']);
 
-                // Auto-resolve low stock alert if quantity is now >= 10
-                if ($product->quantity >= 10 && $product->low_stock_alert_created_at && !$product->low_stock_alert_resolved_at) {
+                // Clear low stock alert if quantity is now sufficient
+                if ($product->quantity >= 10 && $product->low_stock_alert_created_at) {
                     $product->update([
-                        'low_stock_alert_resolved_at' => now(),
-                        'low_stock_alert_resolved_by' => auth()->guard('staff')->id()
+                        'low_stock_alert_created_at' => null
                     ]);
                 }
-
-                $totalAmount += $item['price'] * $item['quantity'];
             }
 
+            // Create Transaction
             $transaction = Transaction::create([
                 'transaction_date' => now(),
                 'payment_method' => $validated['payment_method'],
@@ -108,20 +95,34 @@ class PurchaseOrderController extends Controller
                 'type' => 'purchase'
             ]);
 
+            // Create Purchase Transaction
             PurchaseTransaction::create([
                 'transaction_id' => $transaction->transaction_id,
-                'purchase_id' => $order->purchase_id,
+                'purchase_id' => $purchaseOrder->purchase_id,
                 'amount' => $totalAmount
             ]);
 
             DB::commit();
 
-            return redirect()->route('purchase-orders.show', $order->purchase_id)
+            return redirect()->route('purchase-orders.show', $purchaseOrder->purchase_id)
                 ->with('success', 'Purchase order created successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', 'Failed to create purchase order: ' . $e->getMessage());
         }
+    }
+
+    public function show($purchaseId)
+    {
+        $order = PurchaseOrder::with([
+            'supplier',
+            'expenses.product',
+            'purchaseTransaction.transaction.staff'
+        ])->findOrFail($purchaseId);
+
+        return Inertia::render('PurchaseOrders/Show', [
+            'order' => $order
+        ]);
     }
 }
