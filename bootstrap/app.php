@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckStaffRole::class,
         ]);
+        $middleware->redirectGuestsTo('/customer/login');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

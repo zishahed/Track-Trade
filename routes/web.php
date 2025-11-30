@@ -18,6 +18,9 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return redirect()->route('products.index');
 })->name('welcome');
+Route::get('/login', function () {
+    return redirect()->route('customer.login');
+})->name('login');
 
 // ========== STAFF ROUTES (Access via /staff) ==========
 Route::get('/staff', [StaffController::class, 'showLogin'])->name('staff.login');
@@ -57,12 +60,14 @@ Route::get('/customer/dashboard', [CustomerAuthController::class, 'dashboard'])
 // ========== PRODUCT BROWSING (PUBLIC - No Login Required) ==========
 Route::get('/products', [ProductCustomerController::class, 'index'])->name('products.index');
 
+// Cart add - accessible without login (handles redirect internally)
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+
 // ========== CUSTOMER PRODUCT ACTIONS (Login Required) ==========
 Route::middleware('auth:customer')->group(function () {
-    // Cart routes
+    // Cart routes (except add)
     Route::prefix('cart')->name('cart.')->group(function () {
         Route::get('/', [CartController::class, 'index'])->name('index');
-        Route::post('/add', [CartController::class, 'add'])->name('add');
         Route::put('/{productId}', [CartController::class, 'update'])->name('update');
         Route::delete('/{productId}', [CartController::class, 'remove'])->name('remove');
         Route::delete('/', [CartController::class, 'clear'])->name('clear');

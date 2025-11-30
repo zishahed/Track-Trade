@@ -41,21 +41,32 @@ export default function ProductsIndex({ products, auth, cartCount, flash }) {
     });
 
     const addToCart = (productId) => {
-        if (!auth?.user) {
-            // Redirect to login if not authenticated
-            router.visit('/customer/login', {
-                data: { redirect: '/products' },
-                onSuccess: () => {
-                    // After login, add to cart
-                    router.post('/cart/add', { product_id: productId, quantity: 1 });
+        console.log('=== ADD TO CART CLICKED ===');
+        console.log('Product ID:', productId);
+        console.log('Auth user:', auth?.user);
+        console.log('Is authenticated:', !!auth?.user);
+        
+        router.post('/cart/add', 
+            { product_id: productId, quantity: 1 },
+            { 
+                preserveScroll: true,
+                onBefore: () => {
+                    console.log('Request starting...');
+                },
+                onStart: () => {
+                    console.log('Request started');
+                },
+                onSuccess: (page) => {
+                    console.log('Success response:', page);
+                },
+                onError: (errors) => {
+                    console.log('Error response:', errors);
+                },
+                onFinish: () => {
+                    console.log('Request finished');
                 }
-            });
-        } else {
-            router.post('/cart/add', 
-                { product_id: productId, quantity: 1 },
-                { preserveScroll: true }
-            );
-        }
+            }
+        );
     };
 
     const getCategoryGradient = (category) => {

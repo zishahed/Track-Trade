@@ -44,7 +44,7 @@ return [
             'driver' => 'session',
             'provider' => 'staffs',
         ],
-        'customer' => [  
+        'customer' => [
             'driver' => 'session',
             'provider' => 'customers',
         ],
@@ -76,7 +76,7 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\Staff::class,
         ],
-        'customers' => [  
+        'customers' => [
             'driver' => 'eloquent',
             'model' => App\Models\Customer::class,
         ],

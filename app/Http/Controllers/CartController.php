@@ -1,81 +1,86 @@
 <?php
-// app/Http/Controllers/CartController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class CartController extends Controller
 {
-    /**
-     * Display the cart
-     */
-    public function index(Request $request)
+    public function index()
     {
-        $cart = session()->get('cart', []);
-        $cartItems = [];
-        $subtotal = 0;
+        $customer = Auth::guard('customer')->user();
+        $cartItems = session()->get('cart', []);
         
-        foreach ($cart as $productId => $cartItem) {
+        $processedItems = [];
+        $subtotal = 0;
+
+        foreach ($cartItems as $productId => $item) {
             $product = Product::find($productId);
             if ($product) {
-                $itemSubtotal = $product->price * $cartItem['quantity'];
-                $cartItems[] = [
+                $itemSubtotal = $product->price * $item['quantity'];
+                $subtotal += $itemSubtotal;
+                
+                $processedItems[] = [
                     'product' => $product,
-                    'quantity' => $cartItem['quantity'],
+                    'quantity' => $item['quantity'],
                     'subtotal' => $itemSubtotal
                 ];
-                $subtotal += $itemSubtotal;
             }
         }
 
-        $tax = $subtotal * 0.10; // 10% tax
-        $shipping = $subtotal >= 100 ? 0 : 15; // Free shipping over $100
+        $tax = $subtotal * 0.10;
+        $shipping = $subtotal >= 100 ? 0 : 10;
         $total = $subtotal + $tax + $shipping;
 
         return Inertia::render('Cart/Index', [
-            'cartItems' => $cartItems,
+            'cartItems' => $processedItems,
             'subtotal' => $subtotal,
             'tax' => $tax,
             'shipping' => $shipping,
-            'total' => $total,
+            'total' => $total
         ]);
     }
 
-    /**
-     * Add product to cart
-     */
     public function add(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'product_id' => 'required|exists:products,product_id',
-            'quantity' => 'required|integer|min:1'
+            'quantity' => 'integer|min:1'
         ]);
 
-        $product = Product::findOrFail($validated['product_id']);
+        $productId = $request->product_id;
+        $quantity = $request->quantity ?? 1;
 
-        // Check if enough stock
-        if ($product->quantity < $validated['quantity']) {
-            return back()->with('error', 'Not enough stock available.');
+        // Check if customer is logged in
+        if (!Auth::guard('customer')->check()) {
+            // Store intended action
+            session()->put('cart_action', [
+                'product_id' => $productId,
+                'quantity' => $quantity
+            ]);
+            
+            // Remove the dd() and just redirect
+            return redirect()->route('customer.login')
+                ->with('message', 'Please login to add items to your cart');
+        }
+
+        $product = Product::findOrFail($productId);
+
+        // Check stock
+        if ($product->quantity < $quantity) {
+            return back()->with('error', 'Insufficient stock available');
         }
 
         $cart = session()->get('cart', []);
 
-        // If product already in cart, increase quantity
-        if (isset($cart[$product->product_id])) {
-            $newQuantity = $cart[$product->product_id]['quantity'] + $validated['quantity'];
-            
-            // Check if new quantity exceeds stock
-            if ($newQuantity > $product->quantity) {
-                return back()->with('error', 'Cannot add more items. Insufficient stock.');
-            }
-            
-            $cart[$product->product_id]['quantity'] = $newQuantity;
+        if (isset($cart[$productId])) {
+            $cart[$productId]['quantity'] += $quantity;
         } else {
-            $cart[$product->product_id] = [
-                'quantity' => $validated['quantity']
+            $cart[$productId] = [
+                'quantity' => $quantity
             ];
         }
 
@@ -84,40 +89,28 @@ class CartController extends Controller
         return back()->with('success', 'Product added to cart successfully!');
     }
 
-    /**
-     * Update cart item quantity
-     */
     public function update(Request $request, $productId)
     {
-        $validated = $request->validate([
+        $request->validate([
             'quantity' => 'required|integer|min:1'
         ]);
+
+        $product = Product::findOrFail($productId);
+
+        if ($product->quantity < $request->quantity) {
+            return back()->with('error', 'Insufficient stock available');
+        }
 
         $cart = session()->get('cart', []);
 
         if (isset($cart[$productId])) {
-            $product = Product::find($productId);
-            
-            if (!$product) {
-                return back()->with('error', 'Product not found.');
-            }
-            
-            if ($product->quantity < $validated['quantity']) {
-                return back()->with('error', 'Not enough stock available.');
-            }
-
-            $cart[$productId]['quantity'] = $validated['quantity'];
+            $cart[$productId]['quantity'] = $request->quantity;
             session()->put('cart', $cart);
-            
-            return back()->with('success', 'Cart updated successfully!');
         }
 
-        return back()->with('error', 'Item not found in cart.');
+        return back()->with('success', 'Cart updated successfully!');
     }
 
-    /**
-     * Remove item from cart
-     */
     public function remove($productId)
     {
         $cart = session()->get('cart', []);
@@ -125,19 +118,14 @@ class CartController extends Controller
         if (isset($cart[$productId])) {
             unset($cart[$productId]);
             session()->put('cart', $cart);
-            
-            return back()->with('success', 'Product removed from cart.');
         }
 
-        return back()->with('error', 'Item not found in cart.');
+        return back()->with('success', 'Item removed from cart');
     }
 
-    /**
-     * Clear entire cart
-     */
     public function clear()
     {
         session()->forget('cart');
-        return back()->with('success', 'Cart cleared.');
+        return back()->with('success', 'Cart cleared successfully');
     }
 }

@@ -1,100 +1,116 @@
 <?php
-// app/Http/Controllers/CustomerAuthController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class CustomerAuthController extends Controller
 {
-    /**
-     * Show customer registration form
-     */
     public function showRegister()
     {
         return Inertia::render('Auth/CustomerRegister');
     }
 
-    /**
-     * Handle customer registration
-     */
     public function register(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:customers,email',
-            'phone' => 'required|string|max:20',
+            'email' => 'required|string|email|max:255|unique:customers',
             'password' => 'required|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
         ]);
 
         $customer = Customer::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone' => $validated['phone'],
             'password' => Hash::make($validated['password']),
+            'phone' => $validated['phone'] ?? null,
+            'address' => $validated['address'] ?? null,
         ]);
 
-        // Auto-login the customer
         Auth::guard('customer')->login($customer);
 
-        return redirect()->route('customer.dashboard')
-            ->with('success', 'Registration successful! Welcome to Track & Trade.');
+        return redirect()->route('products.index')
+            ->with('success', 'Registration successful!');
     }
 
-    /**
-     * Show customer login form
-     */
     public function showLogin()
     {
         return Inertia::render('Auth/CustomerLogin');
     }
 
-    /**
-     * Handle customer login
-     */
     public function login(Request $request)
     {
-        $request->validate([
+        $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        $credentials = $request->only('email', 'password');
-        $remember = $request->boolean('remember');
-
-        if (Auth::guard('customer')->attempt($credentials, $remember)) {
-            $request->session()->regenerate();
+        if (Auth::guard('customer')->attempt($credentials, $request->filled('remember'))) {
+            // Get cart action BEFORE any session changes
+            $cartAction = $request->session()->get('cart_action');
             
-            return redirect()->route('customer.dashboard')
-                ->with('success', 'Welcome back!');
+            // Use migrate instead of regenerate to preserve session data
+            $request->session()->migrate();
+            
+            // Restore cart action after migration
+            if ($cartAction) {
+                $request->session()->put('cart_action', $cartAction);
+            }
+
+            // Check for pending cart action
+            if ($cartAction && isset($cartAction['product_id'])) {
+                $productId = $cartAction['product_id'];
+                $quantity = $cartAction['quantity'] ?? 1;
+                
+                // Verify product exists and has stock
+                $product = Product::find($productId);
+                
+                if ($product && $product->quantity >= $quantity) {
+                    // Add to cart
+                    $cart = $request->session()->get('cart', []);
+                    
+                    if (isset($cart[$productId])) {
+                        $cart[$productId]['quantity'] += $quantity;
+                    } else {
+                        $cart[$productId] = ['quantity' => $quantity];
+                    }
+                    
+                    $request->session()->put('cart', $cart);
+                    $request->session()->forget('cart_action');
+                    
+                    return redirect()->route('cart.index')
+                        ->with('success', 'Logged in successfully! Product added to cart.');
+                }
+                
+                $request->session()->forget('cart_action');
+            }
+
+            return redirect()->route('products.index')
+                ->with('success', 'Logged in successfully!');
         }
 
-        throw ValidationException::withMessages([
-            'email' => ['The provided credentials do not match our records.'],
-        ]);
+        return back()->withErrors([
+            'email' => 'The provided credentials do not match our records.',
+        ])->onlyInput('email');
     }
 
-    /**
-     * Handle customer logout
-     */
     public function logout(Request $request)
     {
         Auth::guard('customer')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('customer.login')
-            ->with('success', 'You have been logged out.');
+        return redirect()->route('products.index')
+            ->with('success', 'Logged out successfully!');
     }
 
-    /**
-     * Show customer dashboard
-     */
     public function dashboard()
     {
         $customer = Auth::guard('customer')->user();
@@ -104,4 +120,3 @@ class CustomerAuthController extends Controller
         ]);
     }
 }
-
