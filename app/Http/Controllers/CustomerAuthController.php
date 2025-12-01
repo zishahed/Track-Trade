@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\SalesOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -115,8 +116,57 @@ class CustomerAuthController extends Controller
     {
         $customer = Auth::guard('customer')->user();
         
+        // Get customer's orders with relationships
+        $orders = SalesOrder::where('customer_id', $customer->customer_id)
+            ->with(['incomes.product', 'salesTransaction.transaction'])
+            ->latest('order_date')
+            ->get();
+        
+        // Calculate stats
+        $totalOrders = $orders->count();
+        $pendingOrders = $orders->where('status', 'pending')->count();
+        $completedOrders = $orders->where('status', 'completed')->count();
+        $cancelledOrders = $orders->where('status', 'cancelled')->count();
+        
+        // Get recent orders (last 5)
+        $recentOrders = $orders->take(5);
+        
         return Inertia::render('Customer/Dashboard', [
-            'customer' => $customer
+            'customer' => $customer,
+            'stats' => [
+                'totalOrders' => $totalOrders,
+                'pendingOrders' => $pendingOrders,
+                'completedOrders' => $completedOrders,
+                'cancelledOrders' => $cancelledOrders,
+            ],
+            'orders' => $orders
+        ]);
+    }
+    public function orders()
+    {
+        $customer = Auth::guard('customer')->user();
+        
+        $orders = SalesOrder::where('customer_id', $customer->customer_id)
+            ->with(['incomes.product', 'salesTransaction.transaction'])
+            ->latest('order_date')
+            ->paginate(10);
+        
+        return Inertia::render('Customer/Orders', [
+            'orders' => $orders
+        ]);
+    }
+
+    public function orderDetails($orderId)
+    {
+        $customer = Auth::guard('customer')->user();
+        
+        $order = SalesOrder::where('customer_id', $customer->customer_id)
+            ->where('order_id', $orderId)
+            ->with(['incomes.product', 'salesTransaction.transaction'])
+            ->firstOrFail();
+        
+        return Inertia::render('Customer/OrderDetails', [
+            'order' => $order
         ]);
     }
 }

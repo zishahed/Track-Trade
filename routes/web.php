@@ -77,6 +77,10 @@ Route::middleware('auth:customer')->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.show');
     Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
     Route::get('/checkout/success/{orderId}', [CheckoutController::class, 'success'])->name('checkout.success');
+    
+    // Customer Orders
+    Route::get('/customer/orders', [CustomerAuthController::class, 'orders'])->name('customer.orders');
+    Route::get('/customer/orders/{orderId}', [CustomerAuthController::class, 'orderDetails'])->name('customer.order.details');
 });
 
 // ========== STAFF MANAGEMENT (Manager Only) ==========
