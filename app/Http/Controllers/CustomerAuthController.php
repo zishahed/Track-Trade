@@ -37,6 +37,36 @@ class CustomerAuthController extends Controller
 
         Auth::guard('customer')->login($customer);
 
+        // Check for pending cart action after registration
+        $cartAction = session()->get('cart_action');
+        
+        if ($cartAction && isset($cartAction['product_id'])) {
+            $productId = $cartAction['product_id'];
+            $quantity = $cartAction['quantity'] ?? 1;
+            
+            // Verify product exists and has stock
+            $product = Product::find($productId);
+            
+            if ($product && $product->quantity >= $quantity) {
+                // Add to cart
+                $cart = session()->get('cart', []);
+                
+                if (isset($cart[$productId])) {
+                    $cart[$productId]['quantity'] += $quantity;
+                } else {
+                    $cart[$productId] = ['quantity' => $quantity];
+                }
+                
+                session()->put('cart', $cart);
+                session()->forget('cart_action');
+                
+                return redirect()->route('cart.index')
+                    ->with('success', 'Registration successful! Product added to cart.');
+            }
+            
+            session()->forget('cart_action');
+        }
+
         return redirect()->route('products.index')
             ->with('success', 'Registration successful!');
     }
