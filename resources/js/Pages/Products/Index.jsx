@@ -240,10 +240,18 @@ export default function ProductsIndex({ products, auth, cartCount, flash }) {
                             {filteredProducts.map(product => (
                                 <div key={product.product_id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all overflow-hidden group">
                                     {/* Product Image */}
-                                    <div className={`h-48 bg-gradient-to-br ${getCategoryGradient(product.category)} flex items-center justify-center`}>
-                                        <div className="text-white text-6xl">
-                                            {getCategoryIcon(product.category)}
-                                        </div>
+                                    <div className={`h-48 ${product.image ? 'bg-gray-100' : `bg-gradient-to-br ${getCategoryGradient(product.category)}`} flex items-center justify-center overflow-hidden`}>
+                                        {product.image ? (
+                                            <img 
+                                                src={`/storage/${product.image}`} 
+                                                alt={product.name}
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                            />
+                                        ) : (
+                                            <div className="text-white text-6xl">
+                                                {getCategoryIcon(product.category)}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="p-6">

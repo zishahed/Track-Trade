@@ -16,6 +16,7 @@ class Product extends Model
         'name',
         'sku',
         'category',
+        'image',
         'price',
         'quantity',
         'low_stock_alert_created_at',
