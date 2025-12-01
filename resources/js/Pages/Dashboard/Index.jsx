@@ -180,6 +180,13 @@ export default function Dashboard({ auth, stats, recentActivities }) {
                     <div className="mb-8">
                         <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <Link
+                                href="/staff/products"
+                                className="bg-gradient-to-br from-green-600 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
+                            >
+                                <CurrencyDollarIcon className="h-8 w-8 text-white mb-3 group-hover:scale-110 transition-transform" />
+                                <h4 className="text-lg font-semibold text-white">Buy Products</h4>
+                            </Link>
                             {/* Manager & Inventory can manage products */}
                             {(auth.user?.role === 'manager' || auth.user?.role === 'inventory') && (
                                 <Link
@@ -187,7 +194,7 @@ export default function Dashboard({ auth, stats, recentActivities }) {
                                     className="bg-gradient-to-br from-blue-500 to-indigo-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
                                 >
                                     <CubeIcon className="h-8 w-8 text-white mb-3 group-hover:scale-110 transition-transform" />
-                                    <h4 className="text-lg font-semibold text-white">Products</h4>
+                                    <h4 className="text-lg font-semibold text-white">Edit Products</h4>
                                 </Link>
                             )}
                             

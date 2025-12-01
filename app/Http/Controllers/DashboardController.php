@@ -26,6 +26,10 @@ class DashboardController extends Controller
         $quarterStart = Carbon::now()->firstOfQuarter();
         $quarterEnd = Carbon::now()->lastOfQuarter();
         $today = Carbon::today();
+        
+        // Get previous quarter dates (used by multiple stats)
+        $prevQuarterStart = Carbon::now()->subQuarter()->firstOfQuarter();
+        $prevQuarterEnd = Carbon::now()->subQuarter()->lastOfQuarter();
 
         // Total Revenue This Quarter (for sales and manager)
         if (in_array($role, ['sales', 'manager'])) {
@@ -35,8 +39,6 @@ class DashboardController extends Controller
                 ->sum('total');
 
             // Calculate previous quarter revenue for comparison
-            $prevQuarterStart = Carbon::now()->subQuarter()->firstOfQuarter();
-            $prevQuarterEnd = Carbon::now()->subQuarter()->lastOfQuarter();
             $prevQuarterRevenue = SalesOrder::where('status', 'completed')
                 ->whereBetween('created_at', [$prevQuarterStart, $prevQuarterEnd])
                 ->sum('total');
@@ -132,7 +134,7 @@ class DashboardController extends Controller
 
         // Low Stock Items (for sales, inventory, and manager)
         if (in_array($role, ['sales', 'inventory', 'manager'])) {
-            $lowStockCount = Product::where('quantity', '<', 10)
+            $lowStockCount = Product::where('quantity', '<=', 10)
                 ->where('quantity', '>', 0)
                 ->count();
 

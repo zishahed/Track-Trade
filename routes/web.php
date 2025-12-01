@@ -9,6 +9,7 @@ use App\Http\Controllers\ProductCustomerController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\SalesOrderController;
+use App\Http\Controllers\StaffProductController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
@@ -138,4 +139,20 @@ Route::middleware('auth:staff')->group(function () {
         ->name('purchase-orders.store');
     Route::get('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show'])
         ->name('purchase-orders.show');
+});
+
+// ========== STAFF PRODUCT PURCHASE (Staff Only) ==========
+Route::middleware('auth:staff')->group(function () {
+    Route::get('/staff/products', [StaffProductController::class, 'index'])
+        ->name('staff.products.index');
+    Route::post('/staff/cart/add', [StaffProductController::class, 'addToCart'])
+        ->name('staff.cart.add');
+    Route::get('/staff/checkout', [StaffProductController::class, 'showCheckout'])
+        ->name('staff.checkout.show');
+    Route::post('/staff/checkout/process', [StaffProductController::class, 'processCheckout'])
+        ->name('staff.checkout.process');
+    Route::put('/staff/cart/{productId}', [StaffProductController::class, 'updateCart'])
+        ->name('staff.cart.update');
+    Route::delete('/staff/cart/{productId}', [StaffProductController::class, 'removeFromCart'])
+        ->name('staff.cart.remove');
 });
