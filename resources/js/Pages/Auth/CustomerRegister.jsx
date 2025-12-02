@@ -51,7 +51,7 @@ export default function CustomerRegister() {
                                 value={data.name}
                                 onChange={e => setData('name', e.target.value)}
                                 className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="John Doe"
+                                placeholder="User"
                             />
                         </div>
                     </div>
@@ -69,7 +69,7 @@ export default function CustomerRegister() {
                                 value={data.email}
                                 onChange={e => setData('email', e.target.value)}
                                 className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="john@example.com"
+                                placeholder="user@example.com"
                             />
                         </div>
                     </div>
@@ -87,7 +87,7 @@ export default function CustomerRegister() {
                                 value={data.phone}
                                 onChange={e => setData('phone', e.target.value)}
                                 className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="+1 (555) 000-0000"
+                                placeholder="01xxxxx-xxxx"
                             />
                         </div>
                     </div>

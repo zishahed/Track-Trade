@@ -86,12 +86,6 @@ export default function Login() {
                     </button>
                 </div>
 
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600 font-semibold mb-2">Demo Credentials:</p>
-                    <p className="text-xs text-gray-500">Manager: manager@trackandtrade.com</p>
-                    <p className="text-xs text-gray-500">Password: password123</p>
-                </div>
-
                 <div className="mt-4 text-center">
                     <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
                         ← Back to home
