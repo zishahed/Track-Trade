@@ -21,10 +21,18 @@ class CustomerAuthController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:customers',
+            'email' => 'required|string|email|max:255|unique:customers,email',
             'password' => 'required|string|min:8|confirmed',
-            'phone' => 'nullable|string|max:20',
+            'phone' => [
+                'nullable',
+                'regex:/^(017|019|015|013|018)\d{8}$/',
+                'size:11'
+            ],
             'address' => 'nullable|string',
+        ], [
+            'email.unique' => 'This email is already registered.',
+            'phone.regex' => 'Phone number must start with 017, 019, 015, 013, or 018 and be exactly 11 digits.',
+            'phone.size' => 'Phone number must be exactly 11 digits.',
         ]);
 
         $customer = Customer::create([

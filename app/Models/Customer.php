@@ -3,17 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Authenticatable
 {
     protected $primaryKey = 'customer_id';
-
+    
     protected $fillable = [
         'name',
         'email',
-        'phone',
         'password',
+        'phone',
+        'address',
     ];
 
     protected $hidden = [
@@ -21,15 +21,33 @@ class Customer extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
+    protected $casts = [
+        'password' => 'hashed',
+    ];
+
+    // Validation rules
+    public static function validationRules($customerId = null)
     {
         return [
-            'password' => 'hashed',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:customers,email,' . $customerId . ',customer_id',
+            'password' => $customerId ? 'nullable|string|min:8' : 'required|string|min:8',
+            'phone' => [
+                'nullable',
+                'regex:/^(017|019|015|013|018)\d{8}$/',
+                'size:11'
+            ],
+            'address' => 'nullable|string',
         ];
     }
 
-    public function salesOrders(): HasMany
+    // Custom validation messages
+    public static function validationMessages()
     {
-        return $this->hasMany(SalesOrder::class, 'customer_id', 'customer_id');
+        return [
+            'email.unique' => 'This email is already registered.',
+            'phone.regex' => 'Phone number must start with 017, 019, 015, 013, or 018 and be exactly 11 digits.',
+            'phone.size' => 'Phone number must be exactly 11 digits.',
+        ];
     }
 }

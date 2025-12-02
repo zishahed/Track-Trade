@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/StaffManagementController.php
 
 namespace App\Http\Controllers;
 
@@ -21,16 +20,16 @@ class StaffManagementController extends Controller
     }
 
     /**
-     * Display all staff members
+     * Display paginated staff list
      */
     public function index()
     {
         $this->checkManager();
 
-        $staffMembers = Staff::orderBy('created_at', 'desc')->get();
+        $staffs = Staff::latest()->paginate(20);
 
         return Inertia::render('Staff/Index', [
-            'staffMembers' => $staffMembers
+            'staffs' => $staffs
         ]);
     }
 
@@ -53,20 +52,23 @@ class StaffManagementController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:staffs,email',
-            'role' => 'required|in:manager,sales,inventory,cashier',
+            'email' => 'required|string|email|max:255|unique:staffs,email',
             'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|in:manager,sales,inventory,cashier',
+        ], [
+            'email.unique' => 'This email is already registered.',
+            'role.in' => 'Role must be manager, sales, inventory, or cashier.',
         ]);
 
         Staff::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'role' => $validated['role'],
             'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
         ]);
 
         return redirect()->route('staff-management.index')
-            ->with('success', 'Staff member added successfully.');
+            ->with('success', 'Staff member created successfully.');
     }
 
     /**
@@ -90,22 +92,25 @@ class StaffManagementController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:staffs,email,' . $staff->staff_id . ',staff_id',
+            'email' => 'required|string|email|max:255|unique:staffs,email,' . $staff->staff_id . ',staff_id',
+            'password' => 'nullable|string|min:8|confirmed',
             'role' => 'required|in:manager,sales,inventory,cashier',
+        ], [
+            'email.unique' => 'This email is already registered.',
+            'role.in' => 'Role must be manager, sales, inventory, or cashier.',
         ]);
 
-        $staff->update($validated);
+        $data = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role' => $validated['role'],
+        ];
 
-        // Update password if provided
-        if ($request->filled('password')) {
-            $request->validate([
-                'password' => 'required|string|min:8|confirmed',
-            ]);
-            
-            $staff->update([
-                'password' => Hash::make($request->password)
-            ]);
+        if (!empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
         }
+
+        $staff->update($data);
 
         return redirect()->route('staff-management.index')
             ->with('success', 'Staff member updated successfully.');
